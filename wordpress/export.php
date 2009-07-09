@@ -56,22 +56,10 @@
      **/
     // 헤더 정보를 출력
     $oMigration->setItemCount($limit_count);
-	$oMigration->printHeader();
+    $oMigration->printHeader();
 
-        // 카테고리를 구함
-        $query = sprintf("
-		select 
-			cat_name as title,
-			cat_id as category_srl,
-			category_parent as parent_srl
-		from 
-			%s_categories
-		order by 
-			cat_id asc,
-			category_parent
-		", 
-		$db_info->db_table_prefix
-	);
+    // 카테고리를 구함
+    $query = sprintf("select terms.term_id as category_srl, taxonomy.parent as parent_srl, terms.name as title from %s_terms terms, %s_term_taxonomy taxonomy where taxonomy.taxonomy = 'category' and taxonomy.term_id = terms.term_id", $db_info->db_table_prefix, $db_info->db_table_prefix);
 
     $category_result = $oMigration->query($query);
     while($category_info= $oMigration->fetch($category_result)) {
@@ -84,7 +72,7 @@
     }
 
     // 카테고리 정보 출력
-	$oMigration->printCategoryItem($category_list);
+    $oMigration->printCategoryItem($category_list);
 
     // 게시글은 역순(오래된 순서)으로 구함
     $query = "
@@ -107,6 +95,7 @@
         {$db_info->db_table_prefix}_posts posts,
         {$db_info->db_table_prefix}_users as user
     where 
+	posts.post_type = 'post' and
         posts.post_author = user.id
     order by posts.id asc
     {$limit_query}";
@@ -133,34 +122,61 @@
         $obj->regdate =  $document_info->regdate;
         $obj->update = $document_info->last_update;
 
-	    $query = sprintf("select a.category_id, b.cat_name from %s_post2cat a, %s_categories b where a.post_id = '%d' and a.category_id = b.cat_id", $db_info->db_table_prefix, $db_info->db_table_prefix, $document_info->document_srl);
-	    $cat_result = $oMigration->query($query);
-	    $tags = array();
-	    while($cat_info = $oMigration->fetch($cat_result)) {
+        $query = sprintf("select terms.term_id as category_id, terms.name as cat_name from %s_terms terms, %s_term_taxonomy tax, %s_term_relationships rel where rel.object_id = %d and rel.term_taxonomy_id = tax.term_taxonomy_id and terms.term_id = tax.term_id",$db_info->db_table_prefix,$db_info->db_table_prefix,$db_info->db_table_prefix,$document_info->document_srl);
+
+	$cat_result = $oMigration->query($query);
+	$tags = array();
+	while($cat_info = $oMigration->fetch($cat_result)) {
             $tags[] = $cat_info->cat_name;
             if(!$obj->category) $obj->category = $cat_info->cat_name;
         }
 
+        $query = sprintf("select tags.tag as tag from %s_post2tag tag, %s_tags tags where tag.post_id = %d and tags.tag_id = tag.tag_id", $db_info->db_table_prefix,$db_info->db_table_prefix,$document_info->document_srl);
+	$tag_result = $oMigration->query($query);
+	while($tag_info = $oMigration->fetch($tag_result)) {
+            $tags[] = $tag_info->tag;
+        }
         $obj->tags = implode(',',$tags);
 
+
         // 게시글의 엮인글을 구함 
-        /*
-        $query = sprintf("select * from %s_trackbacks where document_srl = '%s' order by trackback_srl", $db_info->db_table_prefix, $document_info->document_srl);
+        $query = "
+            select 
+                comment_author_url as url,
+                substring(comment_content,1,20) as title,
+                comment_author as blog_name,
+                comment_content as excerpt,
+                date_format(comment_date,'%Y%m%d%H%i%S') as regdate,
+                comment_author_ip as ipaddress
+            from 
+                {$db_info->db_table_prefix}_comments 
+            where 
+                comment_post_id = '{$document_info->document_srl}' and
+                comment_approved != 'spam' and
+		comment_type  = 'trackback'
+            order by 
+            comment_id asc
+        ";
 
         $trackbacks = array();
         $trackback_result = $oMigration->query($query);
         while($trackback_info = $oMigration->fetch($trackback_result)) {
             $trackback_obj = null;
+            $c_pos = strpos($trackback_info->excerpt,'</strong>')+strlen('</strong>');
+            if($c_pos) {
+                $trackback_obj->title = strip_tags(substr($trackback_info->excerpt, 0, $c_pos));
+                $trackback_obj->excerpt = htmlspecialchars(substr($trackback_info->excerpt, $c_pos));
+            } else {
+                $trackback_obj->title = htmlspecialchars(strip_tags($trackback_info->title));
+                $trackback_obj->excerpt = htmlspecialchars(strip_tags($trackback_info->excerpt));
+            }
             $trackback_obj->url = $trackback_info->url;
-            $trackback_obj->title = $trackback_info->title;
             $trackback_obj->blog_name = $trackback_info->blog_name;
-            $trackback_obj->excerpt = $trackback_info->excerpt;
             $trackback_obj->regdate = $trackback_info->regdate;
             $trackback_obj->ipaddress = $trackback_info->ipaddress;
             $trackbacks[] = $trackback_obj;
         }
         $obj->trackbacks = $trackbacks;
-        */
 
         // 게시글의 댓글을 구함
         $comments = array();
@@ -183,7 +199,8 @@
                 {$db_info->db_table_prefix}_comments 
             where 
                 comment_post_id = '{$document_info->document_srl}' and
-                comment_approved != 'spam'
+                comment_approved != 'spam' and
+		comment_type  = ''
             order by 
             comment_id asc
         ";

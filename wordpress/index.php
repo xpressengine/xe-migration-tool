@@ -34,7 +34,7 @@
 
     // 2차 체크
     if($step == 2) {
-	$query = sprintf("select count(*) as count from %s_posts", $db_info->db_table_prefix);
+	$query = sprintf("select count(*) as count from %s_posts where post_type = 'post'", $db_info->db_table_prefix);
     	$result = $oMigration->query($query);
         $data = $oMigration->fetch($result);
         $total_count = $data->count;
