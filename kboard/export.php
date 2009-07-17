@@ -156,7 +156,7 @@
             // use_html옵션에 따른 컨텐츠 정리
             if($document_info->use_html != 2) $obj->content = nl2br($obj->content);
 
-            // 제로보드4의 sitelink1, 2가 있을 경우 본문 상단에 추가
+            // kboard의 sitelink가 있을 경우 본문 상단에 추가
             if($document_info->link) $obj->content = sprintf('<a href="%s" onclick="window.open(this.href);return false;">%s</a>%s<br />', $document_info->link, $document_info->link, $obj->content);
 
             // 게시판의 기타 정보를 구함 (다른 기타 정보가 있을 경우 추가하면 됨 (20개까지 가능)
@@ -172,7 +172,7 @@
                 // 현재 사용중인 primary key값을 sequence로 넣어두면 parent와 결합하여 depth를 이루어서 importing함
                 $comment_obj->sequence = $comment_obj->no;
 
-                // 제로보드4는 댓글에 depth가 없어서 parent를 0으로 세팅. 다른 프로그램이라면 부모 고유값을 입력해주면 됨
+                // kboard는 댓글에 depth가 없어서 parent를 0으로 세팅. 다른 프로그램이라면 부모 고유값을 입력해주면 됨
                 $comment_obj->parent = 0;
 
                 $comment_obj->is_secret = 'N';
