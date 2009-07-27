@@ -35,7 +35,7 @@
         $oDir->close();
     }
     // 디렉토리를 recursive하게 돌면서 XML로 전환
-    findDir($path, $dirs = array($path.'/'));
+    findDir($path, $dirs = array());
     if(!count($dirs)) {
         header("HTTP/1.0 404 Not Found");
         exit();
