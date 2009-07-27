@@ -19,7 +19,7 @@
 
     if($path) {
         // 스프링노트 데이터 파일이 있는지 확인
-        if(!file_exists($path.'index.html')) $errMsg = '백업받은 스프링노트 압축파일을 해제한 디렉토리를 지정해주셔야 합니다';
+        if(!is_dir($path)) $errMsg = '백업받은 스프링노트 압축파일을 해제한 디렉토리를 지정해주셔야 합니다';
         else $step = 2;
     }
 
