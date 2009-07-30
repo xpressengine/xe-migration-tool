@@ -135,6 +135,7 @@
             $obj = null;
 
             if($module_info->use_category && $document_info->cid) $obj->category = $category_list[$document_info->cid];
+            $obj->is_notice = trim($document_info->notice)?'Y':'N';
             $obj->title = $document_info->title;
             $obj->content = $document_info->content;
             $obj->readed_count = $document_info->hit;

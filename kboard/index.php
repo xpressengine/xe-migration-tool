@@ -178,19 +178,13 @@
                     회원정보
                 </label>
             </li>
-            <!--li>
-                <label for="message">
-                    <input type="radio" name="target_module" value="message" id="message" <?php if($target_module=="message") print "checked=\"checked\""?> disabled/>
-                    쪽지
-                </label>
-            </li-->
             <li>
                 <label for="module">
                     <input type="radio" name="target_module" value="module" id="module" <?php if($target_module=="module") print "checked=\"checked\""?>/>
                     게시판
                 </label>
 
-                    <select name="module_id" size="10" class="module_list" onclick="this.form.target_module[2].checked=true;">
+                    <select name="module_id" size="10" class="module_list" onclick="this.form.target_module[1].checked=true;">
                     <?php
                         foreach($module_list as $module_info) {
                         $title = $id = $module_info->tb_name;
