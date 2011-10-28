@@ -9,16 +9,19 @@
 
         define('__ZBXE__',true);
 
+
         if(!file_exists($config_file)) return;
         include($config_file);
 
-        $info->db_type = $db_info->db_type;
-        $info->db_port = $db_info->db_port;
-        $info->db_hostname = $db_info->db_hostname;
-        $info->db_userid = $db_info->db_userid;
-        $info->db_password = $db_info->db_password;
-        $info->db_database = $db_info->db_database;
-        $info->db_table_prefix = $db_info->db_table_prefix;
+        $info->db_type = $db_info->slave_db[0]['db_type'];
+        $info->db_port = $db_info->slave_db[0]['db_port'];
+        $info->db_hostname = $db_info->slave_db[0]['db_hostname'];
+        $info->db_userid = $db_info->slave_db[0]['db_userid'];
+        $info->db_password = $db_info->slave_db[0]['db_password'];
+        $info->db_database = $db_info->slave_db[0]['db_database'];
+        $info->db_table_prefix = $db_info->slave_db[0]['db_table_prefix'];
+
+		if(substr($info->db_table_prefix, -1) == '_') $info->db_table_prefix = substr($info->db_table_prefix, 0, -1);
 
         return $info;
     } 
