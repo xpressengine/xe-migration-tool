@@ -89,7 +89,7 @@
             $obj->allow_mailing = $member_info->user_notify!=0?'Y':'N';
 			$obj->allow_message = $member_info->user_notify_pm!=0?'Y':'N';
             $obj->regdate = date("YmdHis", $member_info->user_regdate);
-            $obj->signature = $member_info->user_sig; // convert text field (BLOB) to actual text;
+            $obj->signature = $member_info->user_sig; 
 
 			// TODO Also import avatar pictures into profile images / image marks
             //$obj->image_nickname = sprintf("%s%d.gif", $image_nickname_path, $member_info->no);
@@ -111,17 +111,17 @@
 	else if($target_module == 'message'){
         $query = '
             select 
-                 as receiver, 
-                 as sender,
-                 as title,
-                 as content,
-                 as readed,
-                 as regdate,
-                 as readed_date
-            from 
-				
-            order by a.no '.$limit_query;
-
+                 t.user_id as receiver, 
+                 p.author_id as sender,
+                 p.message_subject as title,
+                 p.message_text as content,
+                 case when t.pm_unread = 1 then \'N\' else \'Y\' end as readed,
+                 message_time as regdate,
+                 case when t.pm_unread = 1 then null else message_time end as readed_date
+            from phpbb_privmsgs p
+				inner join phpbb_privmsgs_to t on t.msg_id = p.msg_id and t.user_id != t.author_id
+            order by p.msg_id '.$limit_query;
+			
         $message_result = $oMigration->query($query);
 
         while($obj = mysql_fetch_object($message_result)) {
@@ -129,8 +129,8 @@
             else $obj->readed = 'N';
             $obj->regdate = date("YmdHis", $obj->regdate);
             $obj->readed_date = date("YmdHis", $obj->readed_date);
-            $obj->content = nl2br($obj->content);
-
+			$new_content = $code_converter->toXhtml($obj->content);
+			$obj->content = nl2br($new_content);
             $oMigration->printMessageItem($obj);
         }
 	}

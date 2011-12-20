@@ -16,10 +16,14 @@
     // Retrieve form variables
 	if($_POST){
 		if($_POST['path']) $path = $_POST['path'];
-		if($_POST['division']) $division = (int)($_POST['division']);
+		if($_POST['article_division']) $article_division = (int)($_POST['article_division']);
+		if($_POST['member_division']) $member_division = (int)($_POST['member_division']);
+		if($_POST['messages_division']) $message_division = (int)($_POST['messages_division']);
 		if($_POST['exclude_attach']) $exclude_attach = $_POST['exclude_attach'];
 	}
-	if(!$division) $division = 1;
+	if(!$article_division) $article_division = 1;
+	if(!$member_division) $member_division = 1;
+	if(!$message_division) $message_division = 1;
 
     $step = 1;
     $errMsg = '';
@@ -40,13 +44,32 @@
 
     // Step 2
     if($step == 2) {
-	$query = sprintf("select count(*) as count from %s_posts", $db_info->db_table_prefix);
+		// Count articles
+		$query = sprintf("select count(*) as count from %s_posts", $db_info->db_table_prefix);
     	$result = $oMigration->query($query);
         $data = $oMigration->fetch($result);
-        $total_count = $data->count;
+        $total_article_count = $data->count;
 
         // Generate count for when data is split into multiple xml files
-        if($total_count>0) $division_cnt = (int)(($total_count-1)/$division) + 1;
+        if($total_article_count>0) $article_division_cnt = (int)(($total_article_count-1)/$article_division) + 1;
+		
+		// Count users
+		$query = sprintf("select count(*) as count from %s_users", $db_info->db_table_prefix);
+    	$result = $oMigration->query($query);
+        $data = $oMigration->fetch($result);
+        $total_member_count = $data->count;
+
+        // Generate count for when data is split into multiple xml files
+        if($total_member_count>0) $member_division_cnt = (int)(($total_member_count-1)/$member_division) + 1;
+		
+		// Count private messages
+		$query = sprintf("select count(*) as count from %s_privmsgs", $db_info->db_table_prefix);
+    	$result = $oMigration->query($query); 
+        $data = $oMigration->fetch($result);
+        $total_message_count = $data->count;
+
+        // Generate count for when data is split into multiple xml files
+        if($total_message_count>0) $message_division_cnt = (int)(($total_message_count-1)/$message_division) + 1;
     }
 	
 ?>
@@ -65,21 +88,6 @@
         select.module_list { display:block; width:500px; }
     </style>
     <link rel="stylesheet" href="./default.css" type="text/css" />
-
-    <script type="text/javascript">
-        function doCopyToClipboard(value) {
-            if(window.event) {
-                window.event.returnValue = true;
-                window.setTimeout(function() { copyToClipboard(value); },25);
-            }
-        }
-        function copyToClipboard(value) {
-            if(window.clipboardData) {
-                var result = window.clipboardData.setData('Text', value);
-                alert("URL? ???????. Ctrl+v ?? ????? ??? ???");
-            }
-        }
-    </script>
 </head>
 <body>
 
@@ -133,43 +141,103 @@
         </blockquote>
 
         <ul>
-            <li>Total count : <?php print $total_count; ?></li>
+            <li>Total article count : <?php print $total_article_count; ?></li>
             <li>
-                Partition size : <input type="text" name="division" value="<?php echo $division?>" />
-                <input type="submit" value="Update partition size" class="input_submit" />
-            </li>
+                Article partition size : <input type="text" name="article_division" value="<?php echo $article_division?>" />
+            </li>			
             <?php if($target_module == "module") {?>
             <li>
                 Without the attachments: <input type="checkbox" name="exclude_attach" value="Y" <?php if($exclude_attach=='Y') print "checked=\"checked\""; ?> />
                 <input type="submit" value="Without attachments" class="input_submit" />
             </li>
-            <?php } ?>
+            <?php } ?>			
+		</ul>
+		
+		<ul>
+			<li>Total member count : <?php print $total_member_count; ?></li>
+            <li>
+                Member partition size : <input type="text" name="member_division" value="<?php echo $member_division?>" />
+            </li>			
+		</ul>	
+		<ul>
+			<li>Total message count : <?php print $total_message_count; ?></li>
+            <li>
+                Article partition size : <input type="text" name="message_division" value="<?php echo $message_division?>" />
+            </li>			
+		</ul>
+			<blockquote>
+				<input type="submit" value="Update partition size" class="input_submit" />
+			</blockquote>
+
         </ul>
 
+		<hr/>
+		<h3>Download</h3>
         <blockquote>
             Download the generated file<br />
             You can download it by clicking the link.<br />
         </blockquote>
 
+		
+		<h3>Articles</h3>
         <ol>
         <?php
             $real_path = 'http://'.$_SERVER['HTTP_HOST'].preg_replace('/\/index.php$/i','', $_SERVER['SCRIPT_NAME']);
-            for($i=0;$i<$division;$i++) {
-                $start = $i*$division_cnt;
-                $filename = sprintf("phpBB.%06d.xml", $i+1);
-                $url = sprintf("%s/export.php?filename=%s&amp;path=%s&amp;start=%d&amp;limit_count=%d&amp;exclude_attach=%s", $real_path, urlencode($filename), urlencode($path), $start, $division_cnt, $exclude_attach);
+            for($i=0;$i<$article_division;$i++) {
+                $start = $i*$article_division_cnt;
+                $filename = sprintf("phpBB.articles.%06d.xml", $i+1);
+                $url = sprintf("%s/export.php?filename=%s&amp;path=%s&amp;start=%d&amp;limit_count=%d&amp;exclude_attach=%s&amp;target_module=module", $real_path, urlencode($filename), urlencode($path), $start, $article_division_cnt, $exclude_attach);
         ?>
             <li>
                 <a href="<?php print $url?>">
 					<?php print $filename?>
 				</a> 
-				( <?php print $start+1?> ~ <?php print $start+$division_cnt?> ) 
-				[<a href="#" onclick="doCopyToClipboard('<?php print $url?>'); return false;">URL Copy</a>]
+				( <?php print $start+1?> ~ <?php print $start+$article_division_cnt?> ) 
             </li>
         <?php
             }   
         ?>
         </ol>
+		
+		<h3>Members</h3>
+		<ol>
+        <?php
+            $real_path = 'http://'.$_SERVER['HTTP_HOST'].preg_replace('/\/index.php$/i','', $_SERVER['SCRIPT_NAME']);
+            for($i=0;$i<$member_division;$i++) {
+                $start = $i*$member_division_cnt;
+                $filename = sprintf("phpBB.members.%06d.xml", $i+1);
+                $url = sprintf("%s/export.php?filename=%s&amp;path=%s&amp;start=%d&amp;limit_count=%d&amp;exclude_attach=%s&amp;target_module=member", $real_path, urlencode($filename), urlencode($path), $start, $member_division_cnt, $exclude_attach);
+        ?>
+            <li>
+                <a href="<?php print $url?>">
+					<?php print $filename?>
+				</a> 
+				( <?php print $start+1?> ~ <?php print $start+$member_division_cnt?> ) 
+            </li>
+        <?php
+            }   
+        ?>
+        </ol>
+		
+		<h3>Messages</h3>
+        <ol>
+        <?php
+            $real_path = 'http://'.$_SERVER['HTTP_HOST'].preg_replace('/\/index.php$/i','', $_SERVER['SCRIPT_NAME']);
+            for($i=0;$i<$message_division;$i++) {
+                $start = $i*$message_division_cnt;
+                $filename = sprintf("phpBB.messages.%06d.xml", $i+1);
+                $url = sprintf("%s/export.php?filename=%s&amp;path=%s&amp;start=%d&amp;limit_count=%d&amp;exclude_attach=%s&amp;target_module=message", $real_path, urlencode($filename), urlencode($path), $start, $message_division_cnt, $exclude_attach);
+        ?>
+            <li>
+                <a href="<?php print $url?>">
+					<?php print $filename?>
+				</a> 
+				( <?php print $start+1?> ~ <?php print $start+$message_division_cnt?> ) 
+            </li>
+        <?php
+            }   
+        ?>
+        </ol>		
     </form>
     <?php
         }
