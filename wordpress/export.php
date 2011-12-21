@@ -9,7 +9,7 @@
     require_once('./zMigration.class.php');
     $oMigration = new zMigration();
 
-    // 사용되는 변수의 선언
+    // Variable declarations
     $path = $_GET['path'];
     if(substr($path,-1)=='/') $path = substr($path,0,strlen($path)-1);
     $start = $_GET['start'];
@@ -17,7 +17,7 @@
     $exclude_attach = $_GET['exclude_attach']=='Y'?'Y':'N';
     $filename = $_GET['filename'];
 
-    // 입력받은 path를 이용하여 db 정보를 구함
+    // get db path info
     $db_info = getDBInfo($path);
     if(!$db_info) {
         header("HTTP/1.0 404 Not Found");
@@ -27,38 +27,38 @@
     $target_module = 'module';
     $module_id = 'wp';
 
-    // zMigration DB 정보 설정
+    // zMigration set db info
     $oMigration->setDBInfo($db_info);
 
-    // 대상 정보 설정
+    // set module type
     $oMigration->setModuleType($target_module, $module_id);
 
-    // 언어 설정
+    // set charset
     $oMigration->setCharset('UTF-8', 'UTF-8');
 
-    // 다운로드 파일명 설정
+    // set filename
     $oMigration->setFilename($filename);
 
-    // 경로 지정
+    // set path
     $oMigration->setPath($path);
 
-    // db 접속
+    // check connection
     if($oMigration->dbConnect()) {
         header("HTTP/1.0 404 Not Found");
         exit();
     }
 
-    // limit쿼리 생성 (mysql외에도 적용하기 위함)
+    // limit query
     $limit_query = $oMigration->getLimitQuery($start, $limit_count);
     
     /**
-     * 게시판 정보 export일 경우
+     * Export
      **/
-    // 헤더 정보를 출력
+    // Print header information
     $oMigration->setItemCount($limit_count);
     $oMigration->printHeader();
 
-    // 카테고리를 구함
+    // Get wanted category
     $query = sprintf("select terms.term_id as category_srl, taxonomy.parent as parent_srl, terms.name as title from %s_terms terms, %s_term_taxonomy taxonomy where taxonomy.taxonomy = 'category' and taxonomy.term_id = terms.term_id", $db_info->db_table_prefix, $db_info->db_table_prefix);
 
     $category_result = $oMigration->query($query);
@@ -71,10 +71,10 @@
         $category_titles[$obj->title] = $category_info->category_srl;
     }
 
-    // 카테고리 정보 출력
+    // Print category item
     $oMigration->printCategoryItem($category_list);
 
-    // 게시글은 역순(오래된 순서)으로 구함
+    // Wanted posts in reverse order (older first)
     $query = "
     select 
         posts.id as document_srl,
@@ -139,7 +139,7 @@
         $obj->tags = implode(',',$tags);
 
 
-        // 게시글의 엮인글을 구함 
+        // get posts trackbacks
         $query = "
             select 
                 comment_author_url as url,
@@ -178,7 +178,7 @@
         }
         $obj->trackbacks = $trackbacks;
 
-        // 게시글의 댓글을 구함
+        // get post comments
         $comments = array();
         $query = "
             select 
@@ -209,7 +209,7 @@
         while($comment_info = $oMigration->fetch($comment_result)) {
             $comment_obj = null;
 
-            // 현재 사용중인 primary key값을 sequence로 넣어두면 parent와 결합하여 depth를 이루어서 importing함
+            // store comment information
             $comment_obj->sequence = $comment_info->comment_srl;
             $comment_obj->parent = $comment_info->parent_srl; 
             $comment_obj->is_secret = !$comment_info->is_secret?'Y':'N';
@@ -229,7 +229,7 @@
 
         $obj->comments = $comments;
 
-        // 첨부파일 구함
+        // get attachements
         $GLOBALS['files'] = array();
 
         $obj->content = preg_replace_callback('/<img([^>]*)>/i', replaceImage, $obj->content);
@@ -238,7 +238,7 @@
         $oMigration->printPostItem($document_info->document_srl, $obj, $exclude_attach);
     }
 
-        // 푸터 정보를 출력
+        // print footer information
 	$oMigration->printFooter();
 
 	function replaceImage($matches) {
