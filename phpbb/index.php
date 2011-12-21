@@ -54,7 +54,7 @@
         if($total_article_count>0) $article_division_cnt = (int)(($total_article_count-1)/$article_division) + 1;
 		
 		// Count users
-		$query = sprintf("select count(*) as count from %s_users", $db_info->db_table_prefix);
+		$query = sprintf("select count(*) as count from %s_users where user_type = 0", $db_info->db_table_prefix);
     	$result = $oMigration->query($query);
         $data = $oMigration->fetch($result);
         $total_member_count = $data->count;

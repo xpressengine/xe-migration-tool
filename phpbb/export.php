@@ -71,21 +71,22 @@
 	if($target_module == 'member'){
 
         // Retrieve all members from the database
-        $query = sprintf("select * from %s_users order by user_id asc %s ",$db_info->db_prefix, $limit_query);
+		// filter by user_type: Defines what type the user is. 0 is normal user, 1 is inactive and needs to activate their account through an activation link sent in an email, 2 is a pre-defined type to ignore user (i.e. bot), 3 is Founder.
+        $query = sprintf("select * from %s_users where user_type = 0 order by user_id asc %s ",$db_info->db_table_prefix, $limit_query);
         $member_result = $oMigration->query($query);
 
         // Transform phpbb members into objects that represent XE member
-        while($member_info = mysql_fetch_object($member_result)) {
+		// Password is not imported because XE and phpBB use different hashing algorithms.
+        while($member_info = $oMigration->fetch($member_result)) {
             $obj = new stdClass;
 
             $obj->user_id = $member_info->username_clean;
-            $obj->password = $member_info->user_password;
             $obj->user_name = $member_info->username;
             $obj->nick_name = $member_info->username;
-            $obj->email_address = $member_info->user_email;
+            $obj->email = $member_info->user_email;
             $obj->homepage = $member_info->user_website;
             $obj->blog = $member_info->user_website;
-            $obj->birthday = date("YmdHis", $member_info->user_birthday);
+            $obj->birthday = date("YmdHis", strtotime($member_info->user_birthday));
             $obj->allow_mailing = $member_info->user_notify!=0?'Y':'N';
 			$obj->allow_message = $member_info->user_notify_pm!=0?'Y':'N';
             $obj->regdate = date("YmdHis", $member_info->user_regdate);
@@ -109,22 +110,24 @@
         }
 	}
 	else if($target_module == 'message'){
-        $query = '
+        $query = "
             select 
-                 t.user_id as receiver, 
-                 p.author_id as sender,
+                 receiver.user_email as receiver, 
+                 sender.user_email as sender,
                  p.message_subject as title,
                  p.message_text as content,
-                 case when t.pm_unread = 1 then \'N\' else \'Y\' end as readed,
+                 case when t.pm_unread = 1 then 'N' else 'Y' end as readed,
                  message_time as regdate,
                  case when t.pm_unread = 1 then null else message_time end as readed_date
-            from phpbb_privmsgs p
-				inner join phpbb_privmsgs_to t on t.msg_id = p.msg_id and t.user_id != t.author_id
-            order by p.msg_id '.$limit_query;
+            from {$db_info->db_table_prefix}_privmsgs p
+				inner join {$db_info->db_table_prefix}_privmsgs_to t on t.msg_id = p.msg_id and t.user_id != t.author_id
+				inner join {$db_info->db_table_prefix}_users receiver on receiver.user_id = t.user_id
+				inner join {$db_info->db_table_prefix}_users sender on sender.user_id = p.author_id
+            order by p.msg_id ".$limit_query;
 			
         $message_result = $oMigration->query($query);
 
-        while($obj = mysql_fetch_object($message_result)) {
+        while($obj = $oMigration->fetch($message_result)) {
             if($obj->readed) $obj->readed = 'Y'; 
             else $obj->readed = 'N';
             $obj->regdate = date("YmdHis", $obj->regdate);
