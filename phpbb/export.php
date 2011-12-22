@@ -1,4 +1,4 @@
-<?php 
+<?php
     /**
      * @brief phpBB export tool
      * @author corina (xe_dev@arnia.ro)
@@ -17,7 +17,6 @@
     require_once('./lib.inc.php');
     require_once('./zMigration.class.php');
     $oMigration = new zMigration();
-	$code_converter = new BBCodeConverter();
 
     // Retrieve request data
     $path = $_GET['path'];
@@ -27,7 +26,7 @@
     $exclude_attach = $_GET['exclude_attach']=='Y'?'Y':'N';
     $filename = $_GET['filename'];
 	$target_module = $_GET['target_module'];
-	
+
     // Get phpBB database info
     $db_info = getDBInfo($path);
     if(!$db_info) {
@@ -58,9 +57,12 @@
         exit();
     }
 
+    $code_converter = new BBCodeConverter();
+    $code_converter->setMigration($oMigration);
+
     // get the limit part of the query
     $limit_query = $oMigration->getLimitQuery($start, $limit_count);
-    
+
     /**
      * Start export
      **/
@@ -90,7 +92,7 @@
             $obj->allow_mailing = $member_info->user_notify!=0?'Y':'N';
 			$obj->allow_message = $member_info->user_notify_pm!=0?'Y':'N';
             $obj->regdate = date("YmdHis", $member_info->user_regdate);
-            $obj->signature = $member_info->user_sig; 
+            $obj->signature = $member_info->user_sig;
 
 			// TODO Also import avatar pictures into profile images / image marks
             //$obj->image_nickname = sprintf("%s%d.gif", $image_nickname_path, $member_info->no);
@@ -111,8 +113,8 @@
 	}
 	else if($target_module == 'message'){
         $query = "
-            select 
-                 receiver.user_email as receiver, 
+            select
+                 receiver.user_email as receiver,
                  sender.user_email as sender,
                  p.message_subject as title,
                  p.message_text as content,
@@ -124,11 +126,11 @@
 				inner join {$db_info->db_table_prefix}_users receiver on receiver.user_id = t.user_id
 				inner join {$db_info->db_table_prefix}_users sender on sender.user_id = p.author_id
             order by p.msg_id ".$limit_query;
-			
+
         $message_result = $oMigration->query($query);
 
         while($obj = $oMigration->fetch($message_result)) {
-            if($obj->readed) $obj->readed = 'Y'; 
+            if($obj->readed) $obj->readed = 'Y';
             else $obj->readed = 'N';
             $obj->regdate = date("YmdHis", $obj->regdate);
             $obj->readed_date = date("YmdHis", $obj->readed_date);
@@ -137,11 +139,11 @@
             $oMigration->printMessageItem($obj);
         }
 	}
-	else {	
+	else {
 		/**************************
 		 * Categories (document_categories)
 		 **************************/
-		 
+
 		// Retrieve phpBB categories
 		$query = sprintf("select category.forum_id as category_srl
 							, category.parent_id as parent_srl
@@ -163,8 +165,8 @@
 
 		/**************************
 		 * Documents
-		 **************************/	
-		// Retrieve phpBB topics 
+		 **************************/
+		// Retrieve phpBB topics
 		// topic_status - A coded field 0 = Unlocked, 1 = Locked, 2 = Moved
 		$query = "
 			select topic.topic_id as document_srl
@@ -192,8 +194,9 @@
 			$obj = new stdClass;
 
 			// Setup document common attributes
-			$obj->title = $document_info->title;		
+			$obj->title = $document_info->title;
 			$new_content = $code_converter->toXhtml($document_info->content);
+                        $obj->attaches = $code_converter->dumpAttachments();
 			$obj->content = nl2br($new_content);
 			$obj->readed_count = $obj->voted_count = 0;
 			$obj->user_id = $document_info->user_id;
@@ -211,7 +214,7 @@
 			$obj->regdate =  $document_info->regdate;
 			$obj->update = $document_info->last_update;
 
-			// Retrieve document categories 
+			// Retrieve document categories
 			$query = sprintf("select cat.forum_id as category_srl
 									, cat.forum_name as cat_name
 								from %s_topics topic
@@ -225,7 +228,7 @@
 					$tags[] = $cat_info->cat_name;
 					if(!isset($obj->category)) $obj->category = $cat_info->cat_name;
 				}
-			
+
 			// Retrieve document comments
 			$comments = array();
 			$query = "
@@ -244,8 +247,8 @@
 				   , date_format(from_unixtime(post_edit_time),'%Y%m%d%H%i%S') as last_update
 				   , user.user_ip as ipaddress
 				from {$db_info->db_table_prefix}_topics as topic
-				  inner join {$db_info->db_table_prefix}_posts as post 
-					 on post.topic_id = topic.topic_id 
+				  inner join {$db_info->db_table_prefix}_posts as post
+					 on post.topic_id = topic.topic_id
 					   and post.post_id != topic.topic_first_post_id
 				  inner join {$db_info->db_table_prefix}_users as user
 					 on user.user_id = post.poster_id
@@ -257,12 +260,12 @@
 			while($comment_info = $oMigration->fetch($comment_result)) {
 				$comment_obj = new stdClass;
 
-				// ?? ???? primary key?? sequence? ???? parent? ???? depth? ???? importing?
 				$comment_obj->sequence = $comment_info->comment_srl;
-				$comment_obj->parent = $comment_info->parent_srl; 
+				$comment_obj->parent = $comment_info->parent_srl;
 				$comment_obj->is_secret = !$comment_info->is_secret?'Y':'N';
 				$new_content = $code_converter->toXhtml($comment_info->content);
 				$comment_obj->content = nl2br($new_content);
+                                $comment_obj->attaches = $code_converter->dumpAttachments();
 				$comment_obj->voted_count = $comment_info->voted_count;
 				$comment_obj->notify_message = $comment_info->notify_message;
 				$comment_obj->password = $comment_info->password;
@@ -273,7 +276,6 @@
 				$comment_obj->regdate = $comment_info->regdate;
 				$comment_obj->update = $comment_info->last_update;
 				$comment_obj->ipaddress = $comment_info->ipaddress;
-				$comment_obj->attaches = array();
 				$comments[] = $comment_obj;
 			}
 
@@ -282,17 +284,17 @@
 			// Set extra_vars and trackbaks to null, because there is nothing to transfer for them
 			$obj->extra_vars = null;
 			$obj->trackbacks = null;
-			
-			// Retrieve document files
-			$GLOBALS['files'] = array();
 
-			$obj->content = preg_replace_callback('/<img([^>]*)>/i', 'replaceImage', $obj->content);
-			$obj->attaches = $GLOBALS['files'];
+//
+//			$GLOBALS['files'] = array();
+//
+//			$obj->content = preg_replace_callback('/<img([^>]*)>/i', 'replaceImage', $obj->content);
+//			$obj->attaches = $GLOBALS['files'];
 
 			$oMigration->printPostItem($document_info->document_srl, $obj, $exclude_attach);
 		}
 	}
-	
+
     // Print XML file footer
 	$oMigration->printFooter();
 
@@ -303,7 +305,7 @@
 		$target = $matches[1];
 		$pos = strpos(strtolower($target), 'src="');
 		if($pos===false) return $matches[0];
-		
+
 		$tmp_str = substr($target, $pos+5);
 		$pos2 = strpos($tmp_str,'"');
 		if($pos2===false) $pos2 = strpos($tmp_str,'\'');

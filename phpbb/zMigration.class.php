@@ -68,7 +68,7 @@
                         if(!mysqli_connect_errno()) mysqli_select_db($this->connect, $this->db_info->db_database);
                         if(mysqli_connect_errno()) return mysqli_connect_error();
                         if($this->source_charset == 'UTF-8') mysqli_query($this->connect, "set names 'utf8'");
-                    break;					
+                    break;
                 case 'cubrid' :
                         $this->connect = @cubrid_connect($this->db_info->hostname, $this->db_info->port, $this->db_info->db_database, $this->db_info->userid, $this->db_info->password);
                         if(!$this->connect) return 'database connect fail';
@@ -118,9 +118,9 @@
 							return false;
 						};
 						return $result;
-						
-						
-                    break;					
+
+
+                    break;
                 case 'cubrid' :
                         return @cubrid_execute($this->connect, $query);
                     break;
@@ -143,7 +143,7 @@
                     break;
                 case 'mysqli' :
                         return mysqli_fetch_object($result);
-                    break;					
+                    break;
                 case 'cubrid' :
                         return cubrid_fetch($result, CUBRID_OBJECT);
                     break;
@@ -201,7 +201,7 @@
             else printf('<posts count="%d" id="%s" pubDate="%s">%s', $this->item_count, $this->module_id, date("YmdHis"), "\r\n");
         }
 
-        function printFooter() { 
+        function printFooter() {
             if($this->module_type == 'member') print('</members>');
             elseif($this->module_type == 'message') print('</messages>');
             else print('</posts>');
@@ -217,6 +217,7 @@
             $filesize = filesize($filename);
             if($filesize<1) return;
 
+            $buff = '';
             $fp = fopen($filename,"r");
             if($fp) {
                 while(!feof($fp)) {
@@ -257,7 +258,7 @@
                 foreach($obj->extra_vars as $key => $val) {
                     if(!$val) continue;
                     printf("<%s>", $key); $this->printString($val); printf("</%s>\r\n", $key);
-                } 
+                }
                 print("</extra_vars>\r\n");
             }
 
@@ -284,7 +285,7 @@
             print("<categories>\r\n");
             foreach($obj as $key => $val) {
                 printf("<category sequence=\"%d\" parent=\"%d\">", $val->sequence, $val->parent);
-                $this->printString($val->title); 
+                $this->printString($val->title);
                 print "</category>\r\n";
             }
             print("</categories>\r\n");
