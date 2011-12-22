@@ -285,12 +285,6 @@
 			$obj->extra_vars = null;
 			$obj->trackbacks = null;
 
-//
-//			$GLOBALS['files'] = array();
-//
-//			$obj->content = preg_replace_callback('/<img([^>]*)>/i', 'replaceImage', $obj->content);
-//			$obj->attaches = $GLOBALS['files'];
-
 			$oMigration->printPostItem($document_info->document_srl, $obj, $exclude_attach);
 		}
 	}
@@ -298,36 +292,4 @@
     // Print XML file footer
 	$oMigration->printFooter();
 
-	function replaceImage($matches) {
-		global $path;
-		$url = $_SERVER['HTTP_HOST'].str_replace($_SERVER['DOCUMENT_ROOT'], '', realpath($path));
-
-		$target = $matches[1];
-		$pos = strpos(strtolower($target), 'src="');
-		if($pos===false) return $matches[0];
-
-		$tmp_str = substr($target, $pos+5);
-		$pos2 = strpos($tmp_str,'"');
-		if($pos2===false) $pos2 = strpos($tmp_str,'\'');
-		if($pos2===false) return $matches[0];
-
-		$target = substr($tmp_str,0,$pos2);
-		$pos = strpos($target, $url);
-		if($pos===false) return $matches[0];
-
-		$filepath = $path.substr($target, $pos+strlen($url));
-		$url = $url.$filepath;
-
-		$tmp_arr = explode('/',$filepath);
-		$filename = $tmp_arr[count($tmp_arr)-1];
-
-		$file_obj->filename = $filename;
-		$file_obj->file = $filepath;
-		$file_obj->download_count = 0;
-
-		$GLOBALS['files'][] = $file_obj;
-
-		$content = str_replace($target, $filename, $matches[0]);
-		return $content;
-	}
 ?>
