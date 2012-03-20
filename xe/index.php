@@ -40,7 +40,15 @@
         // charset을 맞춤
 
         // 모듈 목록을 구해옴
-        $query = "select * from {$db_info->db_table_prefix}_modules where module in ('board')";
+		if($db_info->db_type == 'cubrid')
+		{
+			$query = 'select * from "'.$db_info->db_table_prefix.'_modules" where "module" in (\'board\')';
+		}
+		else
+		{
+			$query = "select * from {$db_info->db_table_prefix}_modules where module in ('board')";
+		}
+
         $module_list_result = $oMigration->query($query);
         while($module_info = $oMigration->fetch($module_list_result)) {
             $module_list[$module_info->module_srl] = $module_info;
@@ -53,17 +61,38 @@
         if($target_module == 'module' && !$module_id) {
             $errMsg = "게시판 선택시 어떤 게시판의 정보를 추출 할 것인지 선택해주세요";
         } else {
-            switch($target_module) {
-                case 'member' :
-                        $query = sprintf("select count(*) as count from %s_%s", $db_info->db_table_prefix, 'member');
-                    break;
-                case 'message' :
-                        $query = sprintf("select count(*) as count from %s_%s where message_type = 'S'", $db_info->db_table_prefix, 'member_message');
-                    break;
-                case 'module' :
-                        $query = sprintf("select count(*) as count from %s_documents where module_srl = '%d'", $db_info->db_table_prefix, $module_id);
-                    break;
-            }
+			switch($target_module) {
+				case 'member' :
+					if($db_info->db_type == 'cubrid')
+					{
+						$query = sprintf('select count(*) as "count" from "%s_%s"', $db_info->db_table_prefix, 'member');
+					}
+					else
+					{
+						$query = sprintf("select count(*) as count from %s_%s", $db_info->db_table_prefix, 'member');
+					}
+					break;
+				case 'message' :
+					if($db_info->db_type == 'cubrid')
+					{
+						$query = sprintf('select count(*) as "count" from "%s_%s" where "message_type" = \'S\'', $db_info->db_table_prefix, 'member_message');
+					}
+					else
+					{
+						$query = sprintf("select count(*) as count from %s_%s where message_type = 'S'", $db_info->db_table_prefix, 'member_message');
+					}
+					break;
+				case 'module' :
+					if($db_info->db_type == 'cubrid')
+					{
+						$query = sprintf('select count(*) as "count" from "%s_documents" where "module_srl" = \'%d\'', $db_info->db_table_prefix, $module_id);
+					}
+					else
+					{
+						$query = sprintf("select count(*) as count from %s_documents where module_srl = '%d'", $db_info->db_table_prefix, $module_id);
+					}
+					break;
+			}
             $result = $oMigration->query($query);
             $data = $oMigration->fetch($result);
             $total_count = $data->count;

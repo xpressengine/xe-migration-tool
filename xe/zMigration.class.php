@@ -64,7 +64,7 @@
                         if($this->source_charset == 'UTF-8') mysql_query("set names 'utf8'");
                     break;
                 case 'cubrid' :
-                        $this->connect = @cubrid_connect($this->db_info->hostname, $this->db_info->port, $this->db_info->db_database, $this->db_info->userid, $this->db_info->password);
+                        $this->connect = @cubrid_connect($this->db_info->db_hostname, $this->db_info->db_port, $this->db_info->db_database, $this->db_info->db_userid, $this->db_info->db_password);
                         if(!$this->connect) return 'database connect fail';
                     break;
                 case 'sqlite3_pdo' :
@@ -92,7 +92,7 @@
                 case 'postgresql' :
                         return sprintf(" offset %d limit %d ", $start, $limit_count);
                 case 'cubrid' :
-                        return sprintf(" for ordeby_num() between %d and %d ", $start, $limit_count);
+                        return sprintf(" for orderby_num() between %d and %d ", $start, $limit_count);
                 default :
                         return sprintf(" limit %d, %d ", $start, $limit_count);
                     break;

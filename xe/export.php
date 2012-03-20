@@ -60,14 +60,28 @@
         $oMigration->printHeader();
 
         // 추가폼 정보를 구함
-        $query = sprintF("select * from %s_member_join_form", $db_info->db_table_prefix);
+		if($db_info->db_type == 'cubrid')
+		{
+			$query = sprintF('select * from "%s_member_join_form"', $db_info->db_table_prefix);
+		}
+		else
+		{
+			$query = sprintF("select * from %s_member_join_form", $db_info->db_table_prefix);
+		}
         $form_result = $oMigration->query($query);
         while($form_item = $oMigration->fetch($form_result)) {
             $form[] = $form_item->column_name;
         }
 
         // 회원정보를 구함
-        $query = sprintF("select * from %s_member order by member_srl %s", $db_info->db_table_prefix, $limit_query);
+		if($db_info->db_type == 'cubrid')
+		{
+			$query = sprintF('select * from "%s_member" order by "member_srl" %s', $db_info->db_table_prefix, $limit_query);
+		}
+		else
+		{
+			$query = sprintF("select * from %s_member order by member_srl %s", $db_info->db_table_prefix, $limit_query);
+		}
         $member_result = $oMigration->query($query);
         
         // 회원정보를 하나씩 돌면서 migration format에 맞춰서 변수화 한후에 printMemberItem 호출
@@ -132,31 +146,62 @@
         $oMigration->printHeader();
 
         // 쪽지 정보를 오래된 순부터 구해옴
-        $query = sprintf("
-                select 
-                    b.user_id as sender,
-                    c.user_id as receiver,
-                    a.title as title,
-                    a.content as content,
-                    a.readed as readed,
-                    a.regdate as regdate,
-                    a.readed_date as readed_date
-                from 
-                    %s_member_message a,
-                    %s_member b,
-                    %s_member c
-                where 
-                    a.sender_srl = b.member_srl and
-                    a.receiver_srl = c.member_srl and 
-                    a.message_type = 'S'
-                order by a.message_srl
-                %s
-                ",
-                $db_info->db_table_prefix,
-                $db_info->db_table_prefix,
-                $db_info->db_table_prefix,
-                $limit_query
-        );
+		if($db_info->db_type == 'cubrid')
+		{
+			$query = sprintf('
+					select 
+					"b"."user_id" as "sender",
+					"c"."user_id" as "receiver",
+					"a"."title" as "title",
+					"a"."content" as "content",
+					"a"."readed" as "readed",
+					"a"."regdate" as "regdate",
+					"a"."readed_date" as "readed_date"
+					from 
+					"%s_member_message" as "a",
+					"%s_member" as "b",
+					"%s_member" as "c"
+					where 
+					"a"."sender_srl" = "b"."member_srl" and
+					"a"."receiver_srl" = "c"."member_srl" and 
+					"a"."message_type" = \'S\'
+					order by "a"."message_srl"
+					%s
+					',
+					$db_info->db_table_prefix,
+					$db_info->db_table_prefix,
+					$db_info->db_table_prefix,
+					$limit_query
+						);
+		}
+		else
+		{
+			$query = sprintf("
+					select 
+					b.user_id as sender,
+					c.user_id as receiver,
+					a.title as title,
+					a.content as content,
+					a.readed as readed,
+					a.regdate as regdate,
+					a.readed_date as readed_date
+					from 
+					%s_member_message a,
+					%s_member b,
+					%s_member c
+					where 
+					a.sender_srl = b.member_srl and
+					a.receiver_srl = c.member_srl and 
+					a.message_type = 'S'
+					order by a.message_srl
+					%s
+					",
+					$db_info->db_table_prefix,
+					$db_info->db_table_prefix,
+					$db_info->db_table_prefix,
+					$limit_query
+						);
+		}
 
         $message_result = $oMigration->query($query);
 
@@ -177,7 +222,14 @@
         $module_srl = $module_id;
 
         // 모듈 정보를 구함
-        $query = sprintf("select * from %s_modules where module_srl = '%s'", $db_info->db_table_prefix, $module_srl);
+		if($db_info->db_type == 'cubrid')
+		{
+			$query = sprintf('select * from "%s_modules" where "module_srl" = \'%s\'', $db_info->db_table_prefix, $module_srl);
+		}
+		else
+		{
+			$query = sprintf("select * from %s_modules where module_srl = '%s'", $db_info->db_table_prefix, $module_srl);
+		}
         $module_info_result = $oMigration->query($query);
         $module_info = $oMigration->fetch($module_info_result);
         $module_title = $module_info->browser_title;
@@ -187,7 +239,14 @@
         $oMigration->printHeader();
 
         // 카테고리를 구함
-        $query = sprintf("select * from %s_document_categories where module_srl = '%d' order by list_order asc, parent_srl asc", $db_info->db_table_prefix, $module_srl);
+		if($db_info->db_type == 'cubrid')
+		{
+			$query = sprintf('select * from "%s_document_categories" where "module_srl" = \'%d\' order by "list_order" asc, "parent_srl" asc', $db_info->db_table_prefix, $module_srl);
+		}
+		else
+		{
+			$query = sprintf("select * from %s_document_categories where module_srl = '%d' order by list_order asc, parent_srl asc", $db_info->db_table_prefix, $module_srl);
+		}
         $category_result = $oMigration->query($query);
         while($category_info= $oMigration->fetch($category_result)) {
             $obj = null;
@@ -201,7 +260,14 @@
         $oMigration->printCategoryItem($category_list);
 
         // 게시글은 역순(오래된 순서)으로 구함
-        $query = sprintf("select * from %s_documents where module_srl = '%d' order by document_srl %s", $db_info->db_table_prefix, $module_srl, $limit_query);
+		if($db_info->db_type == 'cubrid')
+		{
+			$query = sprintf('select * from "%s_documents" where "module_srl" = \'%d\' order by "document_srl" %s', $db_info->db_table_prefix, $module_srl, $limit_query);
+		}
+		else
+		{
+			$query = sprintf("select * from %s_documents where module_srl = '%d' order by document_srl %s", $db_info->db_table_prefix, $module_srl, $limit_query);
+		}
         $document_result = $oMigration->query($query);
 
         while($document_info = $oMigration->fetch($document_result)) {
@@ -227,8 +293,15 @@
             $obj->update = $document_info->last_update;
             $obj->tags = $document_info->tags;
 
-            // 게시글의 엮인글을 구함 
-            $query = sprintf("select * from %s_trackbacks where document_srl = '%s' order by trackback_srl", $db_info->db_table_prefix, $document_info->document_srl);
+			// 게시글의 엮인글을 구함 
+			if($db_info->db_type == 'cubrid')
+			{
+				$query = sprintf('select * from "%s_trackbacks" where "document_srl" = \'%s\' order by "trackback_srl"', $db_info->db_table_prefix, $document_info->document_srl);
+			}
+			else
+			{
+				$query = sprintf("select * from %s_trackbacks where document_srl = '%s' order by trackback_srl", $db_info->db_table_prefix, $document_info->document_srl);
+			}
 
             $trackbacks = array();
             $trackback_result = $oMigration->query($query);
@@ -246,7 +319,14 @@
 
             // 게시글의 댓글을 구함
             $comments = array();
-            $query = sprintf("select * from %s_comments where document_srl = '%d' order by comment_srl", $db_info->db_table_prefix, $document_info->document_srl);
+			if($db_info->db_type == 'cubrid')
+			{
+				$query = sprintf('select * from "%s_comments" where "document_srl" = \'%d\' order by "comment_srl"', $db_info->db_table_prefix, $document_info->document_srl);
+			}
+			else
+			{
+				$query = sprintf("select * from %s_comments where document_srl = '%d' order by comment_srl", $db_info->db_table_prefix, $document_info->document_srl);
+			}
             $comment_result = $oMigration->query($query);
             while($comment_info = $oMigration->fetch($comment_result)) {
                 $comment_obj = null;
@@ -271,7 +351,14 @@
                 // 댓글의 첨부파일 체크
                 $files = array();
 
-                $file_query = sprintf("select * from %s_files where upload_target_srl = '%d'", $db_info->db_table_prefix, $comment_info->comment_srl);
+				if($db_info->db_type == 'cubrid')
+				{
+					$file_query = sprintf('select * from "%s_files" where "upload_target_srl" = \'%d\'', $db_info->db_table_prefix, $comment_info->comment_srl);
+				}
+				else
+				{
+					$file_query = sprintf("select * from %s_files where upload_target_srl = '%d'", $db_info->db_table_prefix, $comment_info->comment_srl);
+				}
                 $file_result = $oMigration->query($file_query);
                 while($file_info = $oMigration->fetch($file_result)) {
                     $filename = $file_info->source_filename;
@@ -315,7 +402,14 @@
             // 첨부파일 구함
             $files = array();
 
-            $file_query = sprintf("select * from %s_files where upload_target_srl = '%d'", $db_info->db_table_prefix, $document_info->document_srl);
+			if($db_info->db_type == 'cubrid')
+			{
+				$file_query = sprintf('select * from "%s_files" where "upload_target_srl" = \'%d\'', $db_info->db_table_prefix, $document_info->document_srl);
+			}
+			else
+			{
+				$file_query = sprintf("select * from %s_files where upload_target_srl = '%d'", $db_info->db_table_prefix, $document_info->document_srl);
+			}
             $file_result = $oMigration->query($file_query);
 
             while($file_info = $oMigration->fetch($file_result)) {
@@ -352,7 +446,14 @@
             $obj->attaches = $files;
 
             // 확장변수 구함
-            $vars_query = sprintf("select var_idx, lang_code, value, eid from %s_document_extra_vars where document_srl = '%d'", $db_info->db_table_prefix, $document_info->document_srl);
+			if($db_info->db_type == 'cubrid')
+			{
+				$vars_query = sprintf('select "var_idx", "lang_code", "value", "eid" from "%s_document_extra_vars" where document_srl = \'%d\'', $db_info->db_table_prefix, $document_info->document_srl);
+			}
+			else
+			{
+				$vars_query = sprintf("select var_idx, lang_code, value, eid from %s_document_extra_vars where document_srl = '%d'", $db_info->db_table_prefix, $document_info->document_srl);
+			}
             $vars_result = $oMigration->query($vars_query);
             $extra_vars = array();
             while($var = $oMigration->fetch($vars_result)) {
