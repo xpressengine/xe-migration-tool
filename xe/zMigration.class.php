@@ -92,7 +92,7 @@
                 case 'postgresql' :
                         return sprintf(" offset %d limit %d ", $start, $limit_count);
                 case 'cubrid' :
-                        return sprintf(" for orderby_num() between %d and %d ", $start, $limit_count);
+                        return sprintf(" for orderby_num() between %d and %d ", $start+1, $start+$limit_count+1);
                 default :
                         return sprintf(" limit %d, %d ", $start, $limit_count);
                     break;
