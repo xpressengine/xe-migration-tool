@@ -10,13 +10,13 @@
     $oMigration = new zMigration();
 
     // 사용되는 변수의 선언
-    $path = $_POST['path'];
-    $target_module = $_POST['target_module'];
-    $module_id = $_POST['module_id'];
+    $path = @$_POST['path'];
+    $target_module = @$_POST['target_module'];
+    $module_id = @$_POST['module_id'];
     if($target_module!='module') $module_id = null;
-    $division = (int)($_POST['division']);
+    $division = @(int)($_POST['division']);
     if(!$division) $division = 1;
-    $exclude_attach = $_POST['exclude_attach'];
+    $exclude_attach = @$_POST['exclude_attach'];
 
     $step = 1;
     $errMsg = '';
@@ -167,7 +167,7 @@
                 예2) ../xe
                 </blockquote>
 
-                <input type="text" name="path" value="<?php print $_POST['path']?>" class="input_text" /><input type="submit" class="input_submit"value="설치 경로 입력" />
+                <input type="text" name="path" value="<?php print $path; ?>" class="input_text" /><input type="submit" class="input_submit"value="설치 경로 입력" />
             </li>
         </ul>
     </form>
@@ -217,7 +217,7 @@
             </li>
         </ul>
     </form>
-    <?
+    <?php
         }
     ?>
 
@@ -274,7 +274,7 @@
         ?>
         </ol>
     </form>
-    <?
+    <?php
         }
     ?>
 

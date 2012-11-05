@@ -58,6 +58,8 @@
             switch($this->db_info->db_type) {
                 case 'mysql' :
                 case 'mysql_innodb' :
+			if (strpos($this->db_info->db_hostname, ':') === false && $this->db_info->db_port)
+				$this->db_info->db_hostname .= ':' . $this->db_info->db_port;
                         $this->connect =  @mysql_connect($this->db_info->db_hostname, $this->db_info->db_userid, $this->db_info->db_password);
                         if(!mysql_error()) @mysql_select_db($this->db_info->db_database, $this->connect);
                         if(mysql_error()) return mysql_error();
