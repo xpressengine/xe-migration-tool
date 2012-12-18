@@ -78,7 +78,7 @@
                 case 'sqlite' :
                         if(substr($this->db_info->db_database,0,1)!='/') $this->db_info->db_database = $this->path.'/'.$this->db_info->db_database;
                         if(!file_exists($this->db_info->db_database)) return "database file not found";
-                        $this->connect = @sqlite_open($this->db_info->db_database, 0666, &$error);
+                        $this->connect = @sqlite_open($this->db_info->db_database, 0666, $error);
                         if($error) return $error;
                     break;
             }
