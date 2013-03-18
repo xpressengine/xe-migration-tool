@@ -8,7 +8,7 @@
         $config_file = sprintf('%s/files/config/db.config.php',$path);
 
         define('__ZBXE__',true);
-
+        define('__XE__',true);
 
         if(!file_exists($config_file)) return;
         include($config_file);
