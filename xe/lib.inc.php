@@ -1,4 +1,11 @@
 <?php
+
+	// Set Timezone as server time
+	if(version_compare(PHP_VERSION, '5.3.0') >= 0)
+	{
+		date_default_timezone_set(@date_default_timezone_get());
+	}
+
     /**
      * DB의 정보를 구하는 함수 (대상 tool마다 다름)
      * db에 접속할 수 있도록 정보를 구한 후 형식을 맞춰 zMigration에서 쓸수 있도록 return

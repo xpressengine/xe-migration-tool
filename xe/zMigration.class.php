@@ -58,12 +58,19 @@
             switch($this->db_info->db_type) {
                 case 'mysql' :
                 case 'mysql_innodb' :
-			if (strpos($this->db_info->db_hostname, ':') === false && $this->db_info->db_port)
-				$this->db_info->db_hostname .= ':' . $this->db_info->db_port;
+						if (strpos($this->db_info->db_hostname, ':') === false && $this->db_info->db_port)
+							$this->db_info->db_hostname .= ':' . $this->db_info->db_port;
                         $this->connect =  @mysql_connect($this->db_info->db_hostname, $this->db_info->db_userid, $this->db_info->db_password);
                         if(!mysql_error()) @mysql_select_db($this->db_info->db_database, $this->connect);
                         if(mysql_error()) return mysql_error();
                         if($this->source_charset == 'UTF-8') mysql_query("set names 'utf8'");
+                    break;
+
+                case 'mysqli' :
+                case 'mysqli_innodb' :
+                        $this->connect =  mysqli_connect($this->db_info->db_hostname, $this->db_info->db_userid, $this->db_info->db_password,$this->db_info->db_database,$this->db_info->db_port);
+                        if(mysql_error()) return mysqli_error();
+                        if($this->source_charset == 'UTF-8') mysqli_query($this->connect, "set names 'utf8'");
                     break;
                 case 'cubrid' :
                         $this->connect = @cubrid_connect($this->db_info->db_hostname, $this->db_info->db_port, $this->db_info->db_database, $this->db_info->db_userid, $this->db_info->db_password);
@@ -107,6 +114,10 @@
                 case 'mysql_innodb' :
                         return mysql_query($query);
                     break;
+                case 'mysqli' :
+                case 'mysqli_innodb' :
+                        return mysqli_query($this->connect, $query);
+                    break;
                 case 'cubrid' :
                         return @cubrid_execute($this->connect, $query);
                     break;
@@ -126,6 +137,10 @@
                 case 'mysql' :
                 case 'mysql_innodb' :
                         return mysql_fetch_object($result);
+                    break;
+                case 'mysqli' :
+                case 'mysqli_innodb' :
+                        return mysqli_fetch_object($result);
                     break;
                 case 'cubrid' :
                         return cubrid_fetch($result, CUBRID_OBJECT);

@@ -273,6 +273,9 @@
         while($document_info = $oMigration->fetch($document_result)) {
             $obj = null;
 
+			if(!isset($document_info->status))
+				$document_info->status = 'PUBLIC';
+
             if($document_info->category_srl) $obj->category = $category_list[$document_info->category_srl]->title;
             $obj->title = $document_info->title;
             $obj->content = $document_info->content;
@@ -284,6 +287,7 @@
             $obj->homepage = $document_info->homepage;
             $obj->password = $document_info->password;
             $obj->ipaddress = $document_info->ipaddress;
+            $obj->status = $document_info->status;
             $obj->allow_comment = $document_info->allow_comment;
             $obj->lock_comment = $document_info->lock_comment;
             $obj->allow_trackback = $document_info->allow_trackback;
@@ -330,6 +334,8 @@
             $comment_result = $oMigration->query($query);
             while($comment_info = $oMigration->fetch($comment_result)) {
                 $comment_obj = null;
+				if(!isset($comment_info->status))
+					$comment_info->status = 1;
 
                 // 현재 사용중인 primary key값을 sequence로 넣어두면 parent와 결합하여 depth를 이루어서 importing함
                 $comment_obj->sequence = $comment_info->comment_srl;
@@ -347,6 +353,7 @@
                 $comment_obj->regdate = $comment_info->regdate;
                 $comment_obj->update = $comment_info->last_update;
                 $comment_obj->ipaddress = $comment_info->ipaddress;
+                $comment_obj->status = $comment_info->status;
 
                 // 댓글의 첨부파일 체크
                 $files = array();
