@@ -114,7 +114,7 @@
     <meta name="generator" content="XpressEngine (http://www.xpressengine.com)" />
     <meta http-equiv="imagetoolbar" content="no" />
 
-    <title>xe data export tool ver 0.4</title>
+    <title>xe data export tool ver 0.6</title>
     <style type="text/css">
         body { font-family:arial; font-size:9pt; }
         input.input_text { width:400px; }
@@ -140,7 +140,7 @@
 </head>
 <body>
 
-    <h1>xe data export tool ver 0.4</h1>
+    <h1>xe data export tool ver 0.6</h1>
 
     <?php
         if($errMsg) {
